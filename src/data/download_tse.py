@@ -119,7 +119,7 @@ def main():
                 if url not in url_done:
                     save_link(label, url)
                     with open(saved_file, 'a') as fl:
-                        fl.write(url)
+                        fl.write(url + '\n')
 
 if __name__=='__main__':
     main()
