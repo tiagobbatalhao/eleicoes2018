@@ -33,6 +33,18 @@ class GCP_storage:
                     break
                 f1.write(d)
 
+    def glob(self, pattern):
+        """
+        Retorna lista de arquivo com match
+        """
+        return self.file_system.glob(f'gs://{self.bucket}/{pattern}')
+
+    def list_files(self, prefix):
+        """
+        Retorna lista de arquivo com prefix
+        """
+        return self.file_system.ls(f'gs://{self.bucket}/{prefix}')
+
     def read_gzip_file(self, remote_path):
         """
         Read and decompress a gzip file
