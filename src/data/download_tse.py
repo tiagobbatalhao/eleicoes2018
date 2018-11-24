@@ -13,12 +13,12 @@ from connections.gcp_storage import GCP_storage
 
 def list_states():
     states = [
+        'SP', 'MG', 'ES', 'RJ',
+        'PR', 'SC', 'RS',
+        'MT', 'MS', 'GO', 'DF',
         'AC', 'AM', 'AP', 'PA', 'RO', 'RR', 'TO',
         'MA', 'CE', 'PI', 'RN', 'PB', 'PE', 'AL', 'SE', 'BA',
-        'MT', 'MS', 'GO', 'DF',
-        'SP', 'RJ', 'MG', 'ES',
-        'PR', 'SC', 'RS',
-        'BR', 'ZZ'
+        'ZZ', 'BR', 'VT',
     ]
     return states
 
@@ -39,23 +39,23 @@ def list_urls():
         'http://agencia.tse.jus.br/estatistica/sead/odsele/perfil_eleitor_deficiente/perfil_eleitor_deficiencia_2018.zip',
         'http://agencia.tse.jus.br/estatistica/sead/odsele/perfil_eleitor_secao/perfil_eleitor_secao_2018_{state}.zip',
     ]
-    urls['pesquisas'] = [
-        'http://agencia.tse.jus.br/estatistica/sead/odsele/pesquisa_eleitoral/pesquisa_eleitoral_2018.zip',
-        'http://agencia.tse.jus.br/estatistica/sead/odsele/pesquisa_eleitoral/nota_fiscal_2018.zip',
-        'http://agencia.tse.jus.br/estatistica/sead/odsele/pesquisa_eleitoral/questionario_pesquisa_2018.zip',
-        'http://agencia.tse.jus.br/estatistica/sead/odsele/pesquisa_eleitoral/bairro_municipio_2018.zip',
-    ]
-    urls['prestacao_eleitoral'] = [
-        'http://agencia.tse.jus.br/estatistica/sead/odsele/prestacao_contas/prestacao_de_contas_eleitorais_orgaos_partidarios_2018.zip',
-        'http://agencia.tse.jus.br/estatistica/sead/odsele/prestacao_contas/prestacao_de_contas_eleitorais_candidatos_2018.zip',
-        'http://agencia.tse.jus.br/estatistica/sead/odsele/prestacao_contas/CNPJ_campanha_2018.zip',
-    ]
     urls['resultados'] = [
         'http://agencia.tse.jus.br/estatistica/sead/odsele/votacao_candidato_munzona/votacao_candidato_munzona_2018.zip',
         'http://agencia.tse.jus.br/estatistica/sead/odsele/votacao_partido_munzona/votacao_partido_munzona_2018.zip',
         'http://agencia.tse.jus.br/estatistica/sead/odsele/votacao_secao/votacao_secao_2018_{state}.zip',
         'http://agencia.tse.jus.br/estatistica/sead/odsele/detalhe_votacao_munzona/detalhe_votacao_munzona_2018.zip',
         'http://agencia.tse.jus.br/estatistica/sead/odsele/detalhe_votacao_secao/detalhe_votacao_secao_2018.zip',
+    ]
+    urls['prestacao_eleitoral'] = [
+        'http://agencia.tse.jus.br/estatistica/sead/odsele/prestacao_contas/prestacao_de_contas_eleitorais_orgaos_partidarios_2018.zip',
+        'http://agencia.tse.jus.br/estatistica/sead/odsele/prestacao_contas/prestacao_de_contas_eleitorais_candidatos_2018.zip',
+        'http://agencia.tse.jus.br/estatistica/sead/odsele/prestacao_contas/CNPJ_campanha_2018.zip',
+    ]
+    urls['pesquisas'] = [
+        'http://agencia.tse.jus.br/estatistica/sead/odsele/pesquisa_eleitoral/pesquisa_eleitoral_2018.zip',
+        'http://agencia.tse.jus.br/estatistica/sead/odsele/pesquisa_eleitoral/nota_fiscal_2018.zip',
+        'http://agencia.tse.jus.br/estatistica/sead/odsele/pesquisa_eleitoral/bairro_municipio_2018.zip',
+        'http://agencia.tse.jus.br/estatistica/sead/odsele/pesquisa_eleitoral/questionario_pesquisa_2018.zip',
     ]
     return urls
 
@@ -82,8 +82,12 @@ def save_link(label, link):
     req = requests.get(link)
     logging.info(f'Done')
     logging.info(f'Reading zip file...')
-    zip = zipfile.ZipFile(BytesIO(req.content))
-    logging.info(f'Done')
+    try:
+        zip = zipfile.ZipFile(BytesIO(req.content))
+        logging.info(f'Done')
+    except zipfile.BadZipFile:
+        logging.info(f'Not a valid file')
+        return None
 
     for fl in zip.namelist():
         if fl.endswith('.csv') or fl.endswith('.txt'):
@@ -99,14 +103,23 @@ def save_link(label, link):
             logging.info(f'Saved {fname}')
 
 def main():
-    urls = list_urls()
-    for label, list_url in urls.items():
-        for url in list_url:
-            if '{state}' in url:
-                for state in list_states():
-                    save_link(label, url.format(state=state))
+    saved_file = '.saved'
+    try:
+        with open(saved_file, 'r') as fl:
+            url_done = [x.strip('\n') for x in fl.readlines()]
+    except FileNotFoundError:
+        url_done = []
+    for label, list_url in list_urls().items():
+        for url_pattern in list_url:
+            if '{state}' in url_pattern:
+                urls = [url_pattern.format(state=state) for state in list_states()]
             else:
-                save_link(label, url)
+                urls = [url_pattern]
+            for url in urls:
+                if url not in url_done:
+                    save_link(label, url)
+                    with open(saved_file, 'a') as fl:
+                        fl.write(url)
 
 if __name__=='__main__':
     main()
