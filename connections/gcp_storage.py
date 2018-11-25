@@ -49,7 +49,10 @@ class GCP_storage:
         """
         Read and decompress a gzip file
         """
-        rpath = f'gs://{self.bucket}/{remote_path}'
+        if remote_path.startswith(self.bucket):
+            rpath = f'gs://{remote_path}'
+        else:
+            rpath = f'gs://{self.bucket}/{remote_path}'
         with self.file_system.open(rpath, 'rb') as f1:
             with gzip.open(f1) as f2:
                 while True:

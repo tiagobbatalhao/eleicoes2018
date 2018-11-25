@@ -7,9 +7,13 @@ gcsfs==0.2.0
 google-auth==1.6.1
 google-auth-oauthlib==0.2.0
 idna==2.7
+numpy==1.15.4
 oauthlib==2.1.0
+pandas==0.23.4
 pyasn1==0.4.4
 pyasn1-modules==0.2.2
+python-dateutil==2.7.5
+pytz==2018.7
 requests==2.20.1
 requests-oauthlib==1.0.0
 rsa==4.0
