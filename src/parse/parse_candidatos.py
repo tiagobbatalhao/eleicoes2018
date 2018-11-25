@@ -47,7 +47,7 @@ def parse_general(file_list, relevant):
             elif typ == 'boolean':
                 value = value == 'S'
             elif typ == 'string':
-                value = value.upper()
+                value = value.upper().strip()
             if typ == 'string' and (value.startswith('#NULO') or value.startswith('#NE')):
                 value = None
             this.append(value)
